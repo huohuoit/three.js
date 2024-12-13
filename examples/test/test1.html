@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Document</title>
+	<link type="text/css" rel="stylesheet" href="">
+	<style>
+		body {
+			overflow: hidden;
+			margin: 0px;
+		}
+	</style>
+</head>
+
+<body>
+	<div id="webgl"></div>
+	<script type="importmap">
+						{
+							"imports": {
+								"three": "../../build/three.module.js",
+								"three/addons/": "../jsm/"
+							}
+						}
+		</script>
+	<script type="module">
+		import * as THREE from '../../build/three.module.js';
+		import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+		// 引入dat.gui.js的一个类GUI
+		import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+
+		const scene = new THREE.Scene();
+		//创建一个长方体几何对象Geometry
+		const geometry = new THREE.BoxGeometry(50, 50, 50);
+		//材质对象Material
+		const material = new THREE.MeshPhongMaterial({
+			color: '#F77234', //设置材质颜色
+			transparent: true,//开启透明
+			opacity: 0.5,//设置透明度
+			// side: THREE.DoubleSide, //平面两面可见
+			shininess: 20, //高光部分的亮度，默认30
+			specular: '#F77234', //高光颜色
+		});
+
+		// for (let i = 0; i < 10; i++) {
+		// 	for (let j = 0; j < 10; j++) {
+		// 		const mesh = new THREE.Mesh(geometry, material); //网格模型对象Mesh
+		// 		// 在XOZ平面上分布
+		// 		mesh.position.set(i * 200, 0, j * 200);
+		// 		scene.add(mesh); //网格模型添加到场景中  
+		// 	}
+		// }
+		const mesh = new THREE.Mesh(geometry, material);
+		mesh.position.set(0, 0, 0);// 设置模型mesh的xyz坐标
+		scene.add(mesh);//模型添加到场景中
+		const axesHelper = new THREE.AxesHelper(1000);// AxesHelper：辅助观察的坐标系
+		scene.add(axesHelper);//辅助坐标线添加到场景中
+		// 设置画布尺寸
+		const width = window.innerWidth;
+		const height = window.innerHeight;
+
+		// 添加环境光
+		const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+		scene.add(ambientLight);
+		// 平行光
+		const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+		// 设置光源的方向：通过光源position属性和目标指向对象的position属性计算
+		directionalLight.position.set(0, 100, 0);
+		scene.add(directionalLight);
+
+		const camera = new THREE.PerspectiveCamera(30, width / height, 1, 3000);
+		// camera.position.set(292, 223, 185);
+		//在原来相机位置基础上拉远，可以观察到更大的范围
+		camera.position.set(800, 800, 800);
+		camera.lookAt(0, 0, 0);
+
+
+		const renderer = new THREE.WebGLRenderer();
+		renderer.antialias = true;
+		renderer.setSize(width, height);
+		renderer.render(scene, camera);
+		renderer.setClearColor(0x444444, 1); //设置背景颜色
+		document.body.appendChild(renderer.domElement);
+
+		// 设置相机控件轨道控制器OrbitControls
+		const controls = new OrbitControls(camera, renderer.domElement);
+		// 如果OrbitControls改变了相机参数，重新调用渲染器渲染三维场景
+		controls.addEventListener('change', function () {
+			renderer.render(scene, camera); //执行渲染操作
+		});//监听鼠标、键盘事件
+		console.log('查看当前屏幕设备像素比', window.devicePixelRatio); // 1.125
+
+		// 可视化改变三维场景工具
+		// 实例化一个gui对象
+		const gui = new GUI();
+		//改变交互界面style属性
+		gui.domElement.style.right = '0px';
+		gui.domElement.style.width = '300px';
+
+		//创建一个对象，对象属性的值可以被GUI库创建的交互界面改变
+		gui.add(ambientLight, 'intensity', 0, 2.0).name('环境光强度');
+		gui.add(directionalLight, 'intensity', 0, 2.0).name('平行光强度');
+
+		const obj = {
+			bool: false,
+		};
+		// 改变的obj属性数据类型是布尔值，交互界面是单选框
+		gui.add(obj, 'bool').name('旋转动画');
+		// 渲染循环
+		function render() {
+			// 当gui界面设置obj.bool为true,mesh执行旋转动画
+			if (obj.bool) mesh.rotateY(0.1);
+			renderer.render(scene, camera);
+			requestAnimationFrame(render);
+		}
+		render();
+
+		// const obj = {
+		// 	color: 0x00ffff,
+		// };
+		// gui.addColor(obj, 'color').onChange(function (value) {
+		// 	mesh.material.color.set(value);
+		// });
+
+		// const obj = {
+		// 	scale: 0,
+		// };
+		// // 参数3数据类型：对象(下拉菜单)
+		// gui.add(obj, 'scale', {
+		// 	left: -100,
+		// 	center: 0,
+		// 	right: 100
+		// 	// 左: -100,//可以用中文
+		// 	// 中: 0,
+		// 	// 右: 100
+		// }).name('位置选择').onChange(function (value) {
+		// 	mesh.position.x = value;
+		// });
+		const objFolder = {
+			color: 0x00ffff,// 材质颜色
+		};
+		// 创建材质子菜单
+		// const matFolder = gui.addFolder('材质');
+		// matFolder.close();
+		// // 材质颜色color
+		// matFolder.addColor(objFolder, 'color').onChange(function (value) {
+		// 	material.color.set(value);
+		// });
+		// // 材质高光颜色specular
+		// matFolder.addColor(objFolder, 'specular').onChange(function (value) {
+		// 	material.specular.set(value);
+		// });
+		// 平行光子菜单
+		const dirFolder = gui.addFolder('平行光');
+		dirFolder.close();//关闭菜单
+		// 平行光强度
+		dirFolder.add(directionalLight, 'intensity', 0, 2);
+		const dirFolder2 = dirFolder.addFolder('位置');//子菜单的子菜单
+		dirFolder2.close();//关闭菜单
+		// 平行光位置
+		dirFolder2.add(directionalLight.position, 'x', -400, 400);
+		dirFolder2.add(directionalLight.position, 'y', -400, 400);
+		dirFolder2.add(directionalLight.position, 'z', -400, 400);
+	</script>
+</body>
+
+</html>
