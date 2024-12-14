@@ -18,14 +18,14 @@
 	<div id="webgl"></div>
 	<script type="importmap">
 						{
-							"imports": {
-								"three": "../../build/three.module.js",
-								"three/addons/": "../jsm/"
-							}
+						"imports": {
+							"three": "../../../build/three.module.js",
+							"three/addons/": "../../jsm/"
+						}
 						}
 		</script>
 	<script type="module">
-		import * as THREE from '../../build/three.module.js';
+    import * as THREE from '../../../build/three.module.js';
 		import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 		// 引入dat.gui.js的一个类GUI
 		import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
@@ -43,17 +43,17 @@
 			specular: '#F77234', //高光颜色
 		});
 
-		// for (let i = 0; i < 10; i++) {
-		// 	for (let j = 0; j < 10; j++) {
-		// 		const mesh = new THREE.Mesh(geometry, material); //网格模型对象Mesh
-		// 		// 在XOZ平面上分布
-		// 		mesh.position.set(i * 200, 0, j * 200);
-		// 		scene.add(mesh); //网格模型添加到场景中  
-		// 	}
-		// }
-		const mesh = new THREE.Mesh(geometry, material);
-		mesh.position.set(0, 0, 0);// 设置模型mesh的xyz坐标
-		scene.add(mesh);//模型添加到场景中
+		for (let i = 0; i < 10; i++) {
+			for (let j = 0; j < 10; j++) {
+				const mesh = new THREE.Mesh(geometry, material); //网格模型对象Mesh
+				// 在XOZ平面上分布
+				mesh.position.set(i * 200, 0, j * 200);
+				scene.add(mesh); //网格模型添加到场景中  
+			}
+		}
+		// const mesh = new THREE.Mesh(geometry, material);
+		// mesh.position.set(0, 0, 0);// 设置模型mesh的xyz坐标
+		// scene.add(mesh);//模型添加到场景中
 		const axesHelper = new THREE.AxesHelper(1000);// AxesHelper：辅助观察的坐标系
 		scene.add(axesHelper);//辅助坐标线添加到场景中
 		// 设置画布尺寸

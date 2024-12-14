@@ -5,7 +5,7 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>test</title>
-	<link type="text/css" rel="stylesheet" href="../main.css">
+	<link type="text/css" rel="stylesheet" href="../../main.css">
 	<style>
 		body {
 			overflow: hidden;
@@ -19,14 +19,14 @@
 	<script type="importmap">
 					{
 						"imports": {
-							"three": "../../build/three.module.js",
-							"three/addons/": "../jsm/"
+							"three": "../../../build/three.module.js",
+							"three/addons/": "../../jsm/"
 						}
 					}
 	</script>
 	<script type="module">
 		// ES6语法，import方式引入js文件
-		import * as THREE from '../../build/three.module.js';
+		import * as THREE from '../../../build/three.module.js';
 		import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 		// 1、创建三维场景
