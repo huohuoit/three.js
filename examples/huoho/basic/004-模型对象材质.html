@@ -46,17 +46,7 @@
     const attribue = new THREE.BufferAttribute(vertices, 3);
     // 设置几何体attributes属性的位置属性
     geometry.attributes.position = attribue;
-    console.log('顶点位置数据', geometry.attributes.position);
-
-    // // 点渲染模式
-    // const material = new THREE.PointsMaterial({
-    //   color: '#F77234', //设置材质颜色
-    //   size: 10.0 //点对象像素尺寸
-    // });
-    // // 创建模型
-    // const points = new THREE.Points(geometry, material); //点模型对象z
-    // points.position.set(0, 0, 0);// 设置模型mesh的xyz坐标
-    // scene.add(points);//模型添加到场景中
+    // console.log('顶点位置数据', geometry.attributes.position);
 
     // 线材质对象
     const material = new THREE.LineBasicMaterial({
@@ -64,8 +54,28 @@
     });
     // 创建线模型对象
     const line = new THREE.Line(geometry, material);
-    line.position.set(0, 0, 0);// 设置模型mesh的xyz坐标
-    scene.add(line);//模型添加到场景中
+    line.position.set(0, 0, 0);
+    scene.add(line);
+
+    // // 再创建一个模型对象
+    // const mesh = new THREE.Mesh(geometry, material);
+    // mesh.position.x = 100;
+    // mesh.material.color.set(0xffff00);
+    // mesh.geometry.translate(0, 100, 0);
+    // scene.add(mesh);
+
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.position.copy(line.position);//1. 第1步位置重合
+    mesh.position.y += 100;//1. 第2步mesh在原来y的基础上增加100
+    scene.add(mesh);
+
+    // 三维向量与模型位置
+    // line.scale.x = 2.0; // 缩放
+    // line.scale.set(0.5, 1.5, 2); //网格模型xyz方向分别缩放0.5,1.5,2倍
+    // line.translateX(100);//沿着x轴正方向平移距离100
+    // const axis = new THREE.Vector3(1, 1, 1);//向量Vector3对象表示方向
+    // axis.normalize(); //向量归一化
+    // line.translateOnAxis(axis, 100); //沿着axis轴表示方向平移100
 
     // const axesHelper = new THREE.AxesHelper(1000);// AxesHelper：辅助观察的坐标系
     // scene.add(axesHelper);//辅助坐标线添加到场景中
@@ -87,6 +97,16 @@
     controls.addEventListener('change', function () {
       renderer.render(scene, camera)
     });
+
+  // 渲染循环
+  function render () {
+    line.rotateY(0.01);// mesh旋转动画
+    // 同步mesh2和mesh的姿态角度一样，不管mesh姿态角度怎么变化，mesh2始终保持同步
+    mesh.rotation.copy(line.rotation);
+    renderer.render(scene, camera);
+    requestAnimationFrame(render);
+  }
+  render();
   </script>
 </body>
 

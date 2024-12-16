@@ -39,10 +39,13 @@
 		// 	transparent: true,//开启透明
 		// 	opacity: 0.5,//设置透明度
 		// });
+
 		// 漫反射网格材质MeshLambertMaterial(opens new window)会受到光照影响
 		// 镜面反射网格材质MeshPhongMaterial(opens new window)会受到光照影响
 		// 还有物理材质MeshPhysicalMaterial、标准材质MeshStandardMaterial会受到光照影响
 		// 还有MeshToonMaterial、MeshMatcapMaterial、MeshDepthMaterial、MeshNormalMaterial
+
+    // 注：使用受光照影响的材质，几何体Geometry需要定义顶点法线数据
 		const material = new THREE.MeshLambertMaterial({
 			color: '#F77234', //设置材质颜色
 			transparent: true,//开启透明
