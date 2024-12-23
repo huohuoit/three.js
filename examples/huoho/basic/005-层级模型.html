@@ -111,6 +111,7 @@
           obj.material.color.set(0xffff00);
         }
       });
+
       // 查询模型节点
       const nameNode = scene.getObjectByName("4号楼");
       const nameNode1 = scene.getObjectByName("1号楼");
@@ -134,6 +135,17 @@
       // group2.visible = false;// 隐藏一个包含多个模型的组对象group
       // nameNode.visible = true;// 使nameNode处于显示状态
       // nameNode.material.visible = false;// 隐藏该材质对应的模型
+
+      
+      //用代码方式解决mesh共享材质问题
+      // model.getObjectByName("洋房").traverse(function (obj) {
+      //   if (obj.isMesh) {
+      //     // .material.clone()返回一个新材质对象，和原来一样，重新赋值给.material属性
+      //     obj.material = obj.material.clone();
+      //   }
+      // });
+      // nameNode1.material.color.set(0xffff00);
+      // nameNode2.material.color.set(0x00ff00);
 
 
       // 添加平行光

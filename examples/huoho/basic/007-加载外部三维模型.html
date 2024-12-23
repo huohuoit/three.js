@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Document</title>
+  <title>加载外部三维模型</title>
   <style>
     body {
       overflow: hidden;
@@ -24,10 +24,16 @@
           }
   		</script>
   <script type="module">
+    // 1、gltf模型加载器GLTFLoader.js
+    // 2、相机参数根据需要设置
+    // 3、加载gltf的时候，webgl渲染器编码方式设置
     import * as THREE from '../../../build/three.module.js';
     import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
     import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+
+    // 引入gltf模型加载库GLTFLoader.js
+    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
     let gui;
 
@@ -37,25 +43,36 @@
     animate();
 
     function init () {
-      // 创建相机
-      camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 200);
-      camera.position.set(100, 100, 100); //根据场景渲染范围尺寸设置相机位置
+      // 创建相机（选择透视投影相机）
+      camera = new THREE.PerspectiveCamera(30, window.innerWidth / window.innerHeight, 1, 3000);
+      camera.position.set(200, 200, 200);
       camera.lookAt(0, 0, 0);
 
       // 创建场景
       scene = new THREE.Scene();
 
-      // 创建模型
-      const geometry = new THREE.BoxGeometry(5, 5, 5);
-      const material = new THREE.MeshPhongMaterial({
-        color: 0xff0000,
-        transparent: true,
-        opacity: 0.5,
-        // wireframe: true // 添加线框模式
+      // 创建纹理贴图
+      const texLoader = new THREE.TextureLoader();
+      const texture = texLoader.load('./images/1.jpg');
+      texture.wrapS = THREE.RepeatWrapping;//重复纹理
+      texture.wrapT = THREE.RepeatWrapping;//重复纹理
+      texture.repeat.set(2, 2);//设置阵列纹理数量
+      // texture.colorSpace = THREE.LinearEncoding;//默认值（3000）
+      // 避免色差：需要使颜色贴图.colorSpace和渲染器.outputColorSpace属性值保持一致
+      texture.colorSpace = THREE.SRGBColorSpace;//修改为THREE.SRGBColorSpace（3001）（好看多了哦！）
+      texture.needsUpdate = true;//设置为true，表示纹理需要更新
+
+      // 创建GLTF加载器对象
+      const loader = new GLTFLoader();
+      // 加载gltf模型
+      loader.load('../../models/gltf/AnimatedMorphSphere/glTF/AnimatedMorphSphere.gltf', function (gltf) {
+        
+        const mesh = gltf.scene.children[0]; //获取Mesh
+        mesh.material.map = texture; //更换不同风格的颜色贴图  直接给gltf模型材质设置.map属性更换贴图，会出现纹理贴图错位的问题，这主要和纹理对象Texture的翻转属性.flipY（默认true）有关
+        // gltf的场景属性gltf.scene,该属性包含的是模型信息，比如几何体BufferGeometry、材质Material、网格模型Mesh
+        scene.add(gltf.scene);
       });
-      const mesh = new THREE.Mesh(geometry, material);
-      // mesh.position.set(0, 0, 0);
-      scene.add(mesh);
+
 
       // 添加平行光
       const dirLight = new THREE.DirectionalLight(0xffffff, 1);
@@ -78,12 +95,14 @@
       renderer.setSize(window.innerWidth, window.innerHeight);
       document.body.appendChild(renderer.domElement);
 
-      // 创建轨道控制器（控制相机,改变相机参数）
       const controls = new OrbitControls(camera, renderer.domElement);
       controls.minDistance = 5;
-      controls.maxDistance = 100;
-      controls.target.set(0, 0, 0); //与lookAt参数保持一致
+      controls.maxDistance = 50;
+      controls.target.set(0, 0, 0);
       controls.update();//update()函数内会执行camera.lookAt(controls.targe)
+      
+      // //解决加载gltf格式模型颜色偏差问题（新版本已不需要手动设置）
+      // renderer.outputColorSpace = THREE.SRGBColorSpace;
 
       // 执行渲染操作
       renderer.render(scene, camera);
