@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <style>
+    body {
+      overflow: hidden;
+      margin: 0px;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- <div id="webgl"></div> -->
+  <script type="importmap">
+          {
+          "imports": {
+            "three": "../../../build/three.module.js",
+            "three/addons/": "../../jsm/"
+          }
+          }
+  		</script>
+  <script type="module">
+    /**
+     * 1. 创建PBR材质，即基于物理的渲染（不同材质模型，模拟光照的算法不同）
+     *      * 不受光照影响：MeshBasicMaterial
+     *      * 受光照影响（漫反射、高光反射）：MeshPhongMaterial（更逼真）
+     *      * 受光照影响（镜面反射-物理）：MeshStandardMaterial（默认使用）
+     *      * 受光照影响（镜面反射-物理）：MeshPhysicalMaterial（渲染能力最强，占用内存最大）
+     * 2. 创建PBR材质的贴图
+     * 3. 将PBR材质的贴图应用到模型上
+     */
+    import * as THREE from '../../../build/three.module.js';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+    import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+
+    let gui;
+
+    let mesh,mesh1,camera, scene, renderer;
+
+    init();
+    animate();
+
+    function init () {
+      // 创建相机
+      camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 200);
+      camera.position.set(100, 100, 100); //根据场景渲染范围尺寸设置相机位置
+      camera.lookAt(0, 0, 0);
+
+      // 创建场景
+      scene = new THREE.Scene();
+
+      // 创建纹理贴图
+      const texLoader = new THREE.CubeTextureLoader();//立方体纹理贴图加载器
+      const envMap = texLoader.setPath('./images/envmap/').load([ // set图片路径
+        'px.jpg', // 正X
+        'nx.jpg', // 负X
+        'py.jpg', // 正Y
+        'ny.jpg', // 负Y
+        'pz.jpg', // 正Z
+        'nz.jpg'  // 负Z
+      ]);
+      envMap.colorSpace = THREE.SRGBColorSpace;
+      envMap.needsUpdate = true;
+
+      // scene.environment = envMap;  // 环境贴图纹理对象 envMap 作为.environment属性值,影响所有模型
+
+      // 创建普通纹理加载器用于材质贴图
+      const textureLoader = new THREE.TextureLoader();
+      const colorMap = textureLoader.load('./images/envmap/px.jpg'); // 使用单张图片作为颜色贴图
+
+      // 创建模型
+      const geometry = new THREE.BoxGeometry(5, 5, 5);
+      const material = new THREE.MeshStandardMaterial({
+        metalness: 1.0,//金属度属性
+        roughness: 0.0,//粗糙度属性（0.0-1.0，0.0表示镜面反射，1.0表示漫反射。默认0.5）
+        map: colorMap,     // 使用普通纹理作为颜色贴图
+        envMap: envMap,    // 使用立方体纹理作为环境贴图
+      });
+      mesh = new THREE.Mesh(geometry, material);
+      // mesh.position.set(0, 0, 0);
+      scene.add(mesh);
+
+      // 创建模型1
+      const geometry1 = new THREE.BoxGeometry(5, 5, 5);
+      const material1 = new THREE.MeshPhysicalMaterial({
+        color: mesh.material.color, //默认颜色
+        metalness: 0.0,//金属度（0.0玻璃非金属）
+        roughness: 0.0,//粗糙度（0.0玻璃表面光滑）
+        envMap: envMap, //环境贴图
+        envMapIntensity: 1.0, //环境贴图对Mesh表面影响程度
+        clearcoat: 1.0,//物体表面清漆层或者说透明涂层的厚度
+        clearcoatRoughness: 0.1,//透明涂层表面的粗糙度
+        transmission: 1.0, //玻璃材质透光率，transmission替代opacity 
+        ior: 1.5,//折射率
+      });
+      mesh1 = new THREE.Mesh(geometry1, material1);
+      mesh1.position.set(10, 0, 0);
+      scene.add(mesh1);
+
+
+
+      // 添加平行光
+      // const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+      // dirLight.position.set(5, 10, 5);
+      // scene.add(dirLight);
+
+      // 添加辅助坐标系
+      const axesHelper = new THREE.AxesHelper(50);
+      axesHelper.layers.enableAll();
+      scene.add(axesHelper);
+
+      // 添加地面网格并设置颜色
+      const gridHelper = new THREE.GridHelper(50, 50, 0x444444, 0x888888);
+      scene.add(gridHelper);
+
+
+      // 创建WebGL渲染器
+      renderer = new THREE.WebGLRenderer();
+      renderer.setPixelRatio(window.devicePixelRatio);
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      document.body.appendChild(renderer.domElement);
+
+      // 创建轨道控制器（控制相机,改变相机参数）
+      const controls = new OrbitControls(camera, renderer.domElement);
+      controls.minDistance = 5;
+      controls.maxDistance = 100;
+      controls.target.set(0, 0, 0); //与lookAt参数保持一致
+      controls.update();//update()函数内会执行camera.lookAt(controls.targe)
+
+      // 执行渲染操作
+      renderer.render(scene, camera);
+
+      window.addEventListener('resize', onWindowResize);
+
+      initGui();
+    }
+
+
+    function onWindowResize () {
+
+      camera.aspect = window.innerWidth / window.innerHeight;
+
+      camera.updateProjectionMatrix();
+
+      renderer.setSize(window.innerWidth, window.innerHeight);
+
+    }
+
+    // 执行渲染循环
+    function animate () {
+      requestAnimationFrame(animate);
+      renderer.render(scene, camera);
+
+    }
+
+    function initGui () {
+
+      gui = new GUI();
+
+      gui.title('初始化GUI');
+      
+      const matFolder = gui.addFolder('PBR材质');
+      matFolder.add(mesh1 .material, 'metalness', 0, 1);
+      matFolder.add(mesh1.material, 'roughness', 0, 1);
+      matFolder.add(mesh1.material, 'clearcoat', 0, 1);
+      matFolder.add(mesh1.material, 'clearcoatRoughness', 0, 1);
+      matFolder.add(mesh1.material, 'envMapIntensity', 0, 10);
+      matFolder.add(mesh.material, 'ior', 0, 3);
+      matFolder.add(mesh.material, 'envMapIntensity', 0, 10);
+
+      // gui.add(layers, 'Toggle Name');
+      // ...
+
+      gui.open();
+
+    }
+
+
+  </script>
+</body>
+
+</html>
