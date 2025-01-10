@@ -1,8 +1,10 @@
 import Node from './Node.js';
 import { addMethodChaining, nodeProxy } from '../tsl/TSLCore.js';
 
+/** @module VarNode **/
+
 /**
- * Class for representing shader variables as nodes. Variables are create from
+ * Class for representing shader variables as nodes. Variables are created from
  * existing nodes like the following:
  *
  * ```js
@@ -24,8 +26,9 @@ class VarNode extends Node {
 	 *
 	 * @param {Node} node - The node for which a variable should be created.
 	 * @param {String?} name - The name of the variable in the shader.
+	 * @param {Boolean?} readOnly - The read-only flag.
 	 */
-	constructor( node, name = null ) {
+	constructor( node, name = null, readOnly = false ) {
 
 		super();
 
@@ -46,7 +49,7 @@ class VarNode extends Node {
 		this.name = name;
 
 		/**
-		 * `VarNonde` sets this property to `true` by default.
+		 * `VarNode` sets this property to `true` by default.
 		 *
 		 * @type {Boolean}
 		 * @default true
@@ -61,6 +64,15 @@ class VarNode extends Node {
 		 * @default true
 		 */
 		this.isVarNode = true;
+
+		/**
+		 *
+		 * The read-only flag.
+		 *
+		 * @type {Boolean}
+		 * @default false
+		 */
+		this.readOnly = readOnly;
 
 	}
 
@@ -78,15 +90,50 @@ class VarNode extends Node {
 
 	generate( builder ) {
 
-		const { node, name } = this;
+		const { node, name, readOnly } = this;
+		const { renderer } = builder;
 
-		const nodeVar = builder.getVarFromNode( this, name, builder.getVectorType( this.getNodeType( builder ) ) );
+		const isWebGPUBackend = renderer.backend.isWebGPUBackend === true;
+
+		let isDeterministic = false;
+		let shouldTreatAsReadOnly = false;
+
+		if ( readOnly ) {
+
+			isDeterministic = builder.isDeterministic( node );
+
+			shouldTreatAsReadOnly = isWebGPUBackend ? readOnly : isDeterministic;
+
+		}
+
+		const vectorType = builder.getVectorType( this.getNodeType( builder ) );
+		const snippet = node.build( builder, vectorType );
+
+		const nodeVar = builder.getVarFromNode( this, name, vectorType, undefined, shouldTreatAsReadOnly );
 
 		const propertyName = builder.getPropertyName( nodeVar );
 
-		const snippet = node.build( builder, nodeVar.type );
+		let declarationPrefix = propertyName;
 
-		builder.addLineFlowCode( `${propertyName} = ${snippet}`, this );
+		if ( shouldTreatAsReadOnly ) {
+
+			const type = builder.getType( nodeVar.type );
+
+			if ( isWebGPUBackend ) {
+
+				declarationPrefix = isDeterministic
+					? `const ${ propertyName }`
+					: `let ${ propertyName }`;
+
+			} else {
+
+				declarationPrefix = `const ${ type } ${ propertyName }`;
+
+			}
+
+		}
+
+		builder.addLineFlowCode( `${ declarationPrefix } = ${ snippet }`, this );
 
 		return propertyName;
 
@@ -96,15 +143,53 @@ class VarNode extends Node {
 
 export default VarNode;
 
+/**
+ * TSL function for creating a var node.
+ *
+ * @function
+ * @param {Node} node - The node for which a variable should be created.
+ * @param {String?} name - The name of the variable in the shader.
+ * @returns {VarNode}
+ */
 const createVar = /*@__PURE__*/ nodeProxy( VarNode );
 
-addMethodChaining( 'toVar', ( ...params ) => createVar( ...params ).append() );
+/**
+ * TSL function for creating a var node.
+ *
+ * @function
+ * @param {Node} node - The node for which a variable should be created.
+ * @param {String?} name - The name of the variable in the shader.
+ * @returns {VarNode}
+ */
+export const Var = ( node, name = null ) => createVar( node, name ).append();
+
+/**
+ * TSL function for creating a const node.
+ *
+ * @function
+ * @param {Node} node - The node for which a constant should be created.
+ * @param {String?} name - The name of the constant in the shader.
+ * @returns {VarNode}
+ */
+export const Const = ( node, name = null ) => createVar( node, name, true ).append();
+
+// Method chaining
+
+addMethodChaining( 'toVar', Var );
+addMethodChaining( 'toConst', Const );
 
 // Deprecated
 
+/**
+ * @function
+ * @deprecated since r170. Use `Var( node )` or `node.toVar()` instead.
+ *
+ * @param {Any} node
+ * @returns {VarNode}
+ */
 export const temp = ( node ) => { // @deprecated, r170
 
-	console.warn( 'TSL: "temp" is deprecated. Use ".toVar()" instead.' );
+	console.warn( 'TSL: "temp( node )" is deprecated. Use "Var( node )" or "node.toVar()" instead.' );
 
 	return createVar( node );
 

@@ -2,8 +2,11 @@ import Node from './Node.js';
 import { select } from '../math/ConditionalNode.js';
 import { ShaderNode, nodeProxy, getCurrentStack, setCurrentStack } from '../tsl/TSLBase.js';
 
+/** @module StackNode **/
+
 /**
- * TODO
+ * Stack is a helper for Nodes that need to produce stack-based code instead of continuous flow.
+ * They are usually needed in cases like `If`, `Else`.
  *
  * @augments Node
  */
@@ -154,8 +157,15 @@ class StackNode extends Node {
 
 	}
 
-	//
+	// deprecated
 
+	/**
+	 * @function
+	 * @deprecated since r168. Use {@link StackNode#Else} instead.
+	 *
+	 * @param  {...any} params
+	 * @returns {StackNode}
+	 */
 	else( ...params ) { // @deprecated, r168
 
 		console.warn( 'TSL.StackNode: .else() has been renamed to .Else().' );
@@ -163,6 +173,12 @@ class StackNode extends Node {
 
 	}
 
+	/**
+	 * @deprecated since r168. Use {@link StackNode#ElseIf} instead.
+	 *
+	 * @param  {...any} params
+	 * @returns {StackNode}
+	 */
 	elseif( ...params ) { // @deprecated, r168
 
 		console.warn( 'TSL.StackNode: .elseif() has been renamed to .ElseIf().' );
@@ -174,4 +190,11 @@ class StackNode extends Node {
 
 export default StackNode;
 
+/**
+ * TSL function for creating a stack node.
+ *
+ * @function
+ * @param {StackNode?} [parent=null] - The parent stack node.
+ * @returns {StackNode}
+ */
 export const stack = /*@__PURE__*/ nodeProxy( StackNode );

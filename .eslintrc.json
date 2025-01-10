@@ -41,7 +41,8 @@
     "CodeMirror": "readonly",
     "esprima": "readonly",
     "jsonlint": "readonly",
-    "VideoFrame": "readonly"
+    "VideoFrame": "readonly",
+    "VideoDecoder": "readonly"
   },
   "rules": {
     "no-throw-literal": [
@@ -63,6 +64,16 @@
     ],
     "no-duplicate-imports": [
       "error"
+    ],
+    "valid-jsdoc": [
+      "error",
+      {
+        "requireReturn": false,
+        "requireReturnType": true,
+        "requireParamDescription": false,
+        "requireReturnDescription": false,
+        "requireParamType": true
+      }
     ]
   }
 }
